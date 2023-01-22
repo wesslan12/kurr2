@@ -5,6 +5,7 @@ import pandas as pd
 from recipe_db import cuisines
 import plotly.graph_objects as go
 import altair as alt
+import time
 from Final import simulation
 from matplotlib.patches import ConnectionPatch
 
