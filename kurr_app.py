@@ -284,7 +284,7 @@ if app_mode =="Setup":
                 alt.Tooltip("Choice", title="Number of right swipes"),
             ]
 
-        ).properties(title = "CHICKIIIES",width = 160,height=100)
+        ).properties(title = "Number of right-swipes per dietary type and matching cuisines",width = 160,height=100)
 
 
         st.altair_chart(bar_chart)
