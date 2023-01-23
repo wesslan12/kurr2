@@ -12,6 +12,11 @@ from matplotlib.patches import ConnectionPatch
 import gower
 from sklearn.cluster import DBSCAN
 from sklearn.preprocessing import scale,RobustScaler,StandardScaler, MinMaxScaler
+from matplotlib import cm
+from sklearn.manifold import TSNE
+from sklearn.datasets import make_blobs
+from sklearn.metrics import silhouette_samples, silhouette_score
+import plotly.express as px
 
 
 import numpy as np
@@ -370,12 +375,7 @@ if app_mode =="Analysis":
 
         # original data
         Xy_original = df[numerical_features + nominal_features + ordinal_features].copy()
-        from sklearn.cluster import KMeans
-        from matplotlib import cm
-        from sklearn.manifold import TSNE
-        from sklearn.datasets import make_blobs
-        from sklearn.metrics import silhouette_samples, silhouette_score
-        import plotly.express as px
+
 
         Xy_, clusters_ = make_blobs(n_samples=4000, centers=5, cluster_std=0.7)
         df_ = pd.DataFrame(Xy_, columns=['X', 'Y'])
@@ -409,6 +409,12 @@ if app_mode =="Analysis":
     ################################################################################################################
     if mode == "Prediction":
         st.write("Lets predict")
+
+
+
+
+
+
 
 
 
