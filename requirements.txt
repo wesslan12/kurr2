@@ -5,4 +5,5 @@ plotly
 altair
 numpy
 sklearn
+scikit-learn
 gower
