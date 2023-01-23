@@ -6,8 +6,13 @@ from recipe_db import cuisines
 import plotly.graph_objects as go
 import altair as alt
 import time
+from sklearn.cluster import KMeans
 from Final import simulation
 from matplotlib.patches import ConnectionPatch
+import gower
+from sklearn.cluster import DBSCAN
+from sklearn.preprocessing import scale,RobustScaler,StandardScaler, MinMaxScaler
+
 
 import numpy as np
 
@@ -70,7 +75,7 @@ def get_value(val,my_dict):
         if val == key:
             return value
 
-app_mode = st.sidebar.selectbox('Select Page',['Home','Setup','Prediction','Visualization']) #two pages
+app_mode = st.sidebar.selectbox('Select Page',['Home','Simulation','Analysis','Visualization']) #two pages
 ############################################# HOME PAGE ################################################################
 if app_mode == "Home":
     st.title("An agent-based model of user interaction on the app 'Kurr'")
@@ -88,6 +93,7 @@ if app_mode == "Home":
                  cells=dict(values=["User-1",'Thai,Indian,Husmanskost',"Vegan"]))
                      ])
     st.plotly_chart(fig)
+
 
 
 #st.table(df)
@@ -125,15 +131,16 @@ if app_mode == "Home":
         & Conditional & 0.7 & 0.3 & 0.6 & 0.4 & 0.1 & 0.9
         \end{matrix}''')
     st.title("Interacting with the model")
-    st.subheader("Setup page")
+    st.subheader("Simulation page")
     st.markdown("**Step 1:** Specify model parameters. Use the sliders in the left sidebar to specify the number of iterations and agents.")
     st.markdown("**Step 2:** Hit the 'Generate agents' button. This will generate the agents and some descriptive statistics and plots of the population")
     st.markdown("**Step 3:** Hit the 'Run simulation' button. This will start the simulation and end at the specified maximum number of steps")
     st.write("When the simulation is finished, the user may choose to run prediction models and visualization by changing the 'Selected Page' to any of these")
 
-############################################# SETUP PAGE ###############################################################
-
-if app_mode =="Setup":
+############################################# SIMULATION PAGE ###############################################################
+if 'result' not in st.session_state:
+    st.session_state.result = None
+if app_mode =="Simulation":
 
 
     st.sidebar.title("Model specifications")
@@ -182,15 +189,22 @@ if app_mode =="Setup":
         st.success('Users generated!', icon="✅")
 
     if st.sidebar.button("Run simulation"):
-        sim = simulation(agents, n)
-        progress_bar = st.progress(0)
-        for i in range(n):
-            time.sleep(0.01)
-            progress_bar.progress((i + 1) / n)
-        st.success('Simulation complete!', icon="✅")
-        results = sim
+        try:
+            sim = simulation(agents, n)
+            progress_bar = st.progress(0)
+            for i in range(n):
+                time.sleep(0.01)
+                progress_bar.progress((i + 1) / n)
+            st.success('Simulation complete!', icon="✅")
+            results = sim
+        finally:
+            st.session_state.result = results
+
+
+
 
         #VISUALIZATION
+
 
 
         match = matches(results)
@@ -281,10 +295,11 @@ if app_mode =="Setup":
             column = alt.Column("Agent_diet:O",title=None),
             tooltip=[
                 alt.Tooltip("Match", title="Matching recipe"),
+                alt.Tooltip("Recipe_diet", title="Recipe diet"),
                 alt.Tooltip("Choice", title="Number of right swipes"),
             ]
 
-        ).properties(title = "Number of right-swipes per dietary type and matching cuisines",width = 160,height=100)
+        ).properties(title = "CHICKIIIES",width = 160,height=100)
 
 
         st.altair_chart(bar_chart)
@@ -299,24 +314,101 @@ if app_mode =="Setup":
 
         chart = get_chart(df1)
         st.altair_chart(chart,use_container_width=True)
-columns = ["Agent_diet","Agent_cuisine","Recipe_cuisine","Time","Choice"]
-if app_mode =="Prediction":
-    mode = st.sidebar.radio("Mode", ["EDA", "Clustering"])
+        st.write(results)
+columns = ["Match","Recipe_cuisine","Time","Choice"]
+
+###################################################################################################################
+############################################ ANALYSIS PAGE ########################################################
+###################################################################################################################
+
+if app_mode =="Analysis":
+    mode = st.sidebar.radio("Mode", ["EDA", "Clustering","Prediction"])
     st.markdown("<h1 style='text-align: center; color: #ff0000;'>Analysis</h1>", unsafe_allow_html=True)
     st.markdown("# Mode: {}".format(mode), unsafe_allow_html=True)
+
+    ################################################################################################################
+    ############################################ CLUSTERING ########################################################
+    ################################################################################################################
     if mode == "Clustering":
-        features = st.sidebar.multiselect("Select Features",columns,default=columns[:3])
+        df = st.session_state.result
+        #Handling numerical features
+        numerical_features = ["Time"]
+        scaler = StandardScaler()
+        scaler.fit(df[numerical_features])
+        numerical_data = scaler.transform(df[numerical_features])
+        numerical_data = pd.DataFrame(numerical_data, index=df.index, columns=numerical_features)
+    ################################################################################################################
+        # Handling ordinal features
+        # create some lists
+        ordinal_features = ['Agent_diet']
+        df['Agent_diet'] = df['Agent_diet'].map({"vegan": 0, "vegetarian": 1,"omnivore":2})
+        ordinal_data = df[ordinal_features]
 
-        # select a clustering algorithm
-        calg = st.sidebar.selectbox("Select a clustering algorithm",
-                             ["K-Means", "K-Medoids", "Spectral Clustering", "Agglomerative Clustering"])
-        ks = st.sidebar.slider("Select number of clusters", min_value=2, max_value=10, value=2)
+        # MinMax scaled
+        scaler = MinMaxScaler(feature_range=(0, 1))
+        scaler.fit(df[ordinal_features])
+        ordinal_data = scaler.transform(df[ordinal_features])
+        ordinal_data = pd.DataFrame(ordinal_data, index=df.index, columns=ordinal_features)
+    ################################################################################################################
+        categorical_features = ["Match","Choice"]
+        nominal_features = [c for c in categorical_features if c not in ordinal_features]
 
-        #udf = res.sort_values("RunID")
-        st.write(res)
+        nominal_data = list()
+        for i, x in df[nominal_features].nunique().iteritems():
+            if x <= 2:
+                nominal_data.append(pd.get_dummies(df[[i]], drop_first=True))
+            elif x > 2:
+                nominal_data.append(pd.get_dummies(df[[i]], drop_first=False))
+
+        nominal_data = pd.concat(nominal_data, axis=1)
+    ################################################################################################################
+    ######################################## CLUSTERING VISUALIZATION ##############################################
+    ################################################################################################################
+        # transformed and scaled dataset
+        Xy_scaled = pd.concat([numerical_data, nominal_data, ordinal_data], axis=1)
+
+
+        # original data
+        Xy_original = df[numerical_features + nominal_features + ordinal_features].copy()
+        from sklearn.cluster import KMeans
+        from matplotlib import cm
+        from sklearn.manifold import TSNE
+        from sklearn.datasets import make_blobs
+        from sklearn.metrics import silhouette_samples, silhouette_score
+        import plotly.express as px
+
+        Xy_, clusters_ = make_blobs(n_samples=4000, centers=5, cluster_std=0.7)
+        df_ = pd.DataFrame(Xy_, columns=['X', 'Y'])
+        df_['K'] = clusters_
+        fig = px.scatter(df_,x="X",y="Y",color="K")
+        st.plotly_chart(fig)
+
+        results = dict()
+        k_cand = [2, 3, 4, 5, 6, 7]  #
+
+        for k in k_cand:
+            kmeans = KMeans(n_clusters=k, random_state=0).fit(Xy_)
+            score0 = kmeans.inertia_
+            score1 = silhouette_score(Xy_, kmeans.labels_, metric='euclidean')
+            score2 = silhouette_score(Xy_, kmeans.labels_, metric='correlation')
+            results[k] = {'k': kmeans, 's0': score0, 's1': score1, 's2': score2}
+
+        fig, axs = plt.subplots(1, 2, sharex=True, figsize=(10, 3))
+        axs[0].plot([i for i in results.keys()], [i['s0'] for i in results.values()], 'o-', label='Inertia')
+        axs[1].plot([i for i in results.keys()], [i['s1'] for i in results.values()], 'o-', label='Euclidean')
+        axs[1].plot([i for i in results.keys()], [i['s2'] for i in results.values()], 'o-', label='Correlation')
 
 
 
+        for ax in axs:
+            ax.set_xticks(k_cand)
+            ax.set_xlabel('K')
+            ax.legend()
+        st.pyplot(fig)
+
+    ################################################################################################################
+    if mode == "Prediction":
+        st.write("Lets predict")
 
 
 
