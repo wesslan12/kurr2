@@ -4,6 +4,5 @@ pandas
 plotly
 altair
 numpy
-sklearn
 scikit-learn
-gower
+pandas_profiling
