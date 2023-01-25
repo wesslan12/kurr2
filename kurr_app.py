@@ -224,16 +224,10 @@ if app_mode =="Simulation":
 
 
         #VISUALIZATION
-
-
-
         match = matches(results)
-
         results["Match"] = match
-        #st.write(results)
         st.title("Descriptive statistics")
         data_csv = convert_df(results)
-        st.download_button(label="Download Data",data = data_csv,file_name="Simulation-results.csv")
 
         groups = ["Vegan","Vegetarian","Omnivore"]
 
@@ -526,7 +520,7 @@ if app_mode =="Analysis":
                         shadow=True, startangle=90)
                 ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
 
-                st.table(eda[])
+                st.table(eda)
             elif Model == 'Decision Tree Classifier':
                 dot_data = tree.export_graphviz(clf, out_file=None,
                                                 feature_names=["Recipe match",
