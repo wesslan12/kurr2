@@ -491,35 +491,15 @@ if app_mode =="Analysis":
                     ax.set_xlabel('K')
                     ax.legend()
                 st.pyplot(fig)
+                
                 n_k = 0
-
                 for i in k:
                     n_k = i
                 index = [f"Cluster {i + 1}" for i in range(n_k)]
 
                 viz_df = df[df["cluster"] <= n_k - 1]
                 eda = viz_df.groupby("cluster").agg(["mean"])[table_viz]
-                eda2 = viz_df.groupby("cluster").count()["Choice"]
                 eda.index = index
-
-                # newdf2 = results.groupby(['Agent_diet'])['Choice'].mean()
-
-
-                choice_pie = []
-                labels = []
-                for i in range(n_k):
-                    x = viz_df[viz_df["cluster"] == i]["Choice"].mean()
-                    labels.append(f"Cluster {i}")
-                    choice_pie.append(x)
-
-                pie = pd.Series(choice_pie)
-                pie.index = index
-
-                fig1, ax1 = plt.subplots()
-                ax1.pie(pie, labels=labels, autopct='%1.1f%%',
-                        shadow=True, startangle=90)
-                ax1.axis('equal')  # Equal aspect ratio ensures that pie is drawn as a circle.
-
                 st.table(eda)
             elif Model == 'Decision Tree Classifier':
                 dot_data = tree.export_graphviz(clf, out_file=None,
