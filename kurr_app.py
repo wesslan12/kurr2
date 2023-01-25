@@ -78,27 +78,18 @@ def matches(df):
     x = (results.apply(lambda row: row['Recipe_cuisine'] in row['Agent_cuisine'], axis='columns'))
     return x.astype(int)
 
-def get_fvalue(val):
-    feature_dict = {"No":1,"Yes":2}
-    for key,value in feature_dict.items():
-        if val == key:
-            return value
-
-def get_value(val,my_dict):
-    for key,value in my_dict.items():
-        if val == key:
-            return value
 
 app_mode = st.sidebar.selectbox('Select Page',['Home','Simulation','Analysis'])
 ############################################# HOME PAGE ################################################################
 if app_mode == "Home":
     st.title("An agent-based model of user interaction on the app 'Kurr'")
-    st.title("Step 1: Generate users")
-    st.subheader("Dietary preferences")
-    st.write("A user-specified number of different agents are generated with different dietary preferences.")
+    st.title("Model synopsis")
+    st.subheader("Step 1: Generate users")
+    st.markdown("**Dietary preferences**")
+    st.write("A user-specified number of agents are generated with different dietary preferences.")
     st.markdown("The dietary preferences (or filters) are *vegan*, *vegetarian*, and *omnivore*.")
     st.write("Based on these dietary preferences, the agents interact differently with the recipes on the app. Vegans interact only with vegan recipes,vegetarians interact with both vegan and vegetarian recipes, while omnivores interact with all of them")
-    st.subheader("Cuisine preferences")
+    st.markdown("**Cuisine preferences**")
     st.write("Each agent also have a random number of cuisine preferences. The cuisine preferences are based on the recipe database provided by 'Kurr'.")
     st.write("In total there are 18 different cuisines. For each agent we draw a random number (with equal probability) between 1 and 18. This number is then used to decide how many different cuisines the agent prefers.")
     st.write("For example, if the result of the random number generator is 3, we sample 3 cuisines from the full list of cuisines and assign those to the agent. Resulting in the following structure:")
@@ -111,8 +102,8 @@ if app_mode == "Home":
 
 
 #st.table(df)
-    st.title("Step 2: Simulating interaction")
-    st.subheader("Steps")
+    st.subheader("Step 2: Simulating interaction")
+    st.markdown("**Steps**")
     st.write("At each step of the simulation, the agents are presented with a recipe and decides to either 'swipe left' or 'swipe right' on the recipe. The likelihood of 'swiping right' is determined by two factors.")
     st.markdown("- **Base probability:** Each agent are assigned a vector of probabilities that represent the likelihood of a left-or right swipe. The probability vector is constant in each of the agent types. Meaning, all vegans have the same base probability of liking a recipe")
     st.markdown("- **Conditional probability:** As mentioned earlier, the recipe might also match with the agents preferences of cuisine. If it does match then the agents have a higher probability to 'swipe right' on the recipe than if there were no match")
