@@ -297,7 +297,7 @@ if app_mode =="Simulation":
             x= alt.X("Match:N",title=None),
             y= alt.Y("Choice:Q",title = "Number of 'right-swipes'"),
             color="Recipe_diet:N",
-            column = alt.Column("Agent_diet:O",title=None),
+            column = alt.Column("Agent_diet:O",title="Agent Diet"),
             tooltip=[
                 alt.Tooltip("Match", title="Matching recipe"),
                 alt.Tooltip("Recipe_diet", title="Recipe diet"),
