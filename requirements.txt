@@ -5,4 +5,4 @@ plotly
 altair
 numpy
 scikit-learn
-ProfileReport
+ydata-profiling
